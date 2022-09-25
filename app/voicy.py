@@ -26,7 +26,7 @@ BOT_TOKEN = config.get('Telegram','bot.token')
 
 bot = TeleBot(BOT_TOKEN)
 
-
+#Get audio file extention
 def getExtention(audio_file):
     logger.info("Getting audio file extention")
     filename, file_extension = os.path.splitext(audio_file)
@@ -85,13 +85,12 @@ def get_audio_from_file(audio_file_path):
     audio = speech.RecognitionAudio(content=content)
     return audio
 
-
-
+#Handle start/help command
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     bot.reply_to(message, config.get('Telegram','bot.welcome.message'))
 	
-
+#Handle voice command
 @bot.message_handler(content_types=['voice', 'audio'])
 def function_name(message):
     command_file = "recordings/" + str(uuid.uuid4()) + ".ogg"
@@ -115,8 +114,7 @@ def function_name(message):
 
 
 
-
-
+#Starting the bot
 if __name__ == "__main__":
     if not os.path.exists("recordings"):
         os.makedirs("recordings")
