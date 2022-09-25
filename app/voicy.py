@@ -11,20 +11,44 @@ from google.cloud import speech
 import yaml, uuid, base64, os, io, wave, json
 from pydub import AudioSegment
 from wavinfo import WavInfoReader
+import paho.mqtt.client as mqtt
 import soundfile
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'key-file.json'
 os.environ['PYTHONIOENCODING'] = 'utf-8'
 os.environ['LANG'] = 'C.UTF-8'
 #Reading cpnfiguration file
+
 logger.info("Reading configuration from config.ini")
 config = configparser.RawConfigParser()
 config.read('config.ini')
-client = speech.SpeechClient()
 
 ALLOWD_IDS = config.get('Telegram','bot.allowedid')
 BOT_TOKEN = config.get('Telegram','bot.token')
 
+client = speech.SpeechClient()
+mqtt_client = mqtt.Client("push")
 bot = TeleBot(BOT_TOKEN)
+
+
+def is_mqtt_configured():
+    try:
+        if "" not in config.get("MQTT","mqtt.port") and "" not in config.get("MQTT","mqtt.host") and "" not in config.get("MQTT","mqtt.user") and "" not in config.get("MQTT","mqtt.password"):
+            return True
+        logger.info("MQTT details are missing")
+        return False
+    except Exception as e:
+        logger.error("Mqtt configuration Error: " + str(e))
+        return False
+
+def configure_mqtt_client():
+    try:
+        if is_mqtt_configured():
+            a=1
+        else:
+            a=0
+    except Exception as e:
+        return False
+
 
 #Get audio file extention
 def getExtention(audio_file):
@@ -116,6 +140,7 @@ def function_name(message):
 
 #Starting the bot
 if __name__ == "__main__":
+    configure_mqtt_client()
     if not os.path.exists("recordings"):
         os.makedirs("recordings")
     logger.info("Voicy is running")
