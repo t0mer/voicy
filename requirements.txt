@@ -1,0 +1,14 @@
+loguru
+requests
+pyTelegramBotAPI
+cryptography
+google-cloud-speech
+google-cloud-translate==2.0.1
+wavinfo
+soundfile
+wave
+pydub
+pyyaml
+google_trans_new
+numpy
+configparser
