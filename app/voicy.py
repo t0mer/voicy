@@ -1,53 +1,108 @@
 # -*- coding: utf-8 -*-
-import os
+import os, yaml, uuid, base64, os, io, wave, json, soundfile, configparser
+from json import dumps
 from loguru import logger
+from wavinfo import WavInfoReader
+from pydub import AudioSegment
+import paho.mqtt.client as mqtt
+
 from telebot import types, TeleBot
 from telebot.custom_filters import AdvancedCustomFilter
 from telebot.callback_data import CallbackData, CallbackDataFilter
-import configparser
-from json import dumps
+
 from google.cloud import translate_v2 as translate
 from google.cloud import speech
-import yaml, uuid, base64, os, io, wave, json
-from pydub import AudioSegment
-from wavinfo import WavInfoReader
-import paho.mqtt.client as mqtt
-import soundfile
+
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'key-file.json'
 os.environ['PYTHONIOENCODING'] = 'utf-8'
 os.environ['LANG'] = 'C.UTF-8'
-#Reading cpnfiguration file
 
+
+
+
+#Reading cpnfiguration file
 logger.info("Reading configuration from config.ini")
 config = configparser.RawConfigParser()
 config.read('config.ini')
+
+mqtt_host = config.get("MQTT","mqtt.host")
+mqtt_port = config.get("MQTT","mqtt.port")
+mqtt_user = config.get("MQTT","mqtt.username")
+mqtt_password = config.get("MQTT","mqtt.password")
 
 ALLOWD_IDS = config.get('Telegram','bot.allowedid')
 BOT_TOKEN = config.get('Telegram','bot.token')
 
 client = speech.SpeechClient()
-mqtt_client = mqtt.Client("push")
+mqtt_client = mqtt.Client("voicy")
 bot = TeleBot(BOT_TOKEN)
 
 
 def is_mqtt_configured():
+    global mqtt_host, mqtt_port ,mqtt_user, mqtt_password
     try:
-        if "" not in config.get("MQTT","mqtt.port") and "" not in config.get("MQTT","mqtt.host") and "" not in config.get("MQTT","mqtt.user") and "" not in config.get("MQTT","mqtt.password"):
-            return True
-        logger.info("MQTT details are missing")
-        return False
+        if not mqtt_host or not mqtt_port or not mqtt_user or not mqtt_password:
+            logger.info(mqtt_host)
+            logger.info("MQTT details are missing")
+            return False
+        return True
     except Exception as e:
         logger.error("Mqtt configuration Error: " + str(e))
         return False
 
-def configure_mqtt_client():
+def connect_to_mqtt_broker():
+    global mqtt_client, mqtt_user, mqtt_password
     try:
         if is_mqtt_configured():
-            a=1
+            #Setting up MqttClient
+            mqtt_client.username_pw_set(mqtt_user,mqtt_password)
+            mqtt_client.on_connect=on_connect
+            mqtt_client.on_disconnect=on_disconnect
+            logger.info("Connecting to broker")
+            mqtt.Client.connected_flag=False#create flag in class
+            mqtt_client.connect(mqtt_host, keepalive=3600)
+            mqtt_client.loop_forever()
+            
         else:
-            a=0
+            logger.info("Mqtt broker is not connected")
     except Exception as e:
         return False
+
+#Check Connection Status
+def on_connect(mqtt_client, userdata, flags, rc):
+    if rc==0:
+        mqtt_client.connected_flag=True #set flag
+        logger.info("Connected to MQTT Broker")
+        mqtt_client.info("connected OK Returned code=" + str(rc))
+    else:
+       if rc==1:
+          logger.error("Connection refused – incorrect protocol version")
+       if rc==2:
+           logger.error("Connection refused – invalid client identifier")
+       if rc==3:
+           logger.error("Connection refused – server unavailable")
+       if rc==4:
+           logger.error("Connection refused – bad username or password")
+       if rc==5:
+           logger.error("Connection refused – not authorised")
+        
+def on_disconnect(mqtt_client, userdata, rc):
+    logger.info("disconnecting reason  "  +str(rc))
+    if rc==1:
+        logger.error("Connection refused – incorrect protocol version")
+    if rc==2:
+        logger.error("Connection refused – invalid client identifier")
+    if rc==3:
+        logger.error("Connection refused – server unavailable")
+    if rc==4:
+        logger.error("Connection refused – bad username or password")
+    if rc==5:
+        logger.error("Connection refused – not authorised")
+
+    mqtt_client.connected_flag=False
+    mqtt_client.disconnect_flag=True
+    mqtt_client.connect(mqtt_host)
+
 
 
 #Get audio file extention
@@ -130,6 +185,7 @@ def function_name(message):
     transcript = str(response.results[0].alternatives[0].transcript).encode()
     logger.info(transcript)
     os.remove(voice_file)
+    mqtt_client.publish("voicy",transcript,qos=0,retain=False)
     bot.reply_to(message, transcript)
 
 
@@ -140,7 +196,7 @@ def function_name(message):
 
 #Starting the bot
 if __name__ == "__main__":
-    configure_mqtt_client()
+    connect_to_mqtt_broker()
     if not os.path.exists("recordings"):
         os.makedirs("recordings")
     logger.info("Voicy is running")
