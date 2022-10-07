@@ -1,0 +1,25 @@
+commands:  
+  - name: Turn boiler on
+    text: להדליק דוד
+    type: mqtt
+    topic: voicy/boiler
+    pyload: "on"
+
+  - name: Turn boiler off
+    text: לכבות דוד
+    type: mqtt
+    topic: voicy/boiler
+    pyload: "off"
+
+  - name: Send Post Request
+    text: בדיקה
+    type: post
+    url: https://webhook.site/0410c31b-5d90-4361-ae0a-1af846efe852
+    data:
+      id: 1001
+      name: geek
+      passion: coding
+    headers:
+      Content-Type: application/json; charset=utf-8
+
+

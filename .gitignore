@@ -1,3 +1,3 @@
 .env
-app/key-file.json
-app/config.ini
+app/config/key-file.json
+app/config/config.ini
