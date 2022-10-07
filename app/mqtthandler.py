@@ -80,9 +80,9 @@ class MqttHandler:
         except Exception as e:
             return False
 
-    def publish(self,transcript):
+    def publish(self,topic,payload):
         try:
-            self.mqtt_client.publish("voicy",transcript,qos=0,retain=False)
+            self.mqtt_client.publish(topic,payload,qos=0,retain=False)
 
         except Exception as e:
             logger.error(str(e))

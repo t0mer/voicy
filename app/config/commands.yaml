@@ -3,15 +3,15 @@ commands:
     text: להדליק דוד
     type: mqtt
     topic: voicy/boiler
-    pyload: "on"
+    payload: "on"
 
   - name: Turn boiler off
     text: לכבות דוד
     type: mqtt
     topic: voicy/boiler
-    pyload: "off"
+    payload: "off"
 
-  - name: Send Post Request
+  - name: Send Post Request with data and headers
     text: בדיקה
     type: post
     url: https://webhook.site/0410c31b-5d90-4361-ae0a-1af846efe852
@@ -19,7 +19,26 @@ commands:
       id: 1001
       name: geek
       passion: coding
+      attributes:
+        unit_of_measurement: °C
     headers:
       Content-Type: application/json; charset=utf-8
+      User-Agent: My User Agent 1.0
+      Authorization: Bearer ABCDEFGH
 
+  - name: Send Post Request with data only
+    text: הבדיקה
+    type: post
+    url: https://webhook.site/0410c31b-5d90-4361-ae0a-1af846efe852
+    data:
+      id: 1001
+      name: geek
+      passion: coding
 
+  - name: Send Post Request with headers only
+    text: פינוקיו
+    type: post
+    url: https://webhook.site/0410c31b-5d90-4361-ae0a-1af846efe852
+    headers:
+      Content-Type: application/json; charset=utf-8
+      User-Agent: My User Agent 1.0

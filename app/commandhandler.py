@@ -1,5 +1,7 @@
 from nis import match
 from unittest import case
+from urllib import response
+from wsgiref import headers
 import mqtthandler
 from loguru import logger
 import yaml
@@ -43,7 +45,13 @@ class CommandHandler:
                 
 
     def execute_post(self):
-        logger.info("post")
+        if str(self.command).find("data") !=-1 and str(self.command).find("headers")==-1:
+            response = requests.post(self.command["url"],json=str(self.command["data"]))
+        if str(self.command).find("data") !=-1 and str(self.command).find("headers")!=-1:
+            response = requests.post(self.command["url"],headers=self.command["headers"],json=str(self.command["data"])) 
+        if str(self.command).find("data") ==-1 and str(self.command).find("headers")!=-1:
+            response = requests.post(self.command["url"],headers=self.command["headers"])        
+        logger.info(str(response.status_code))
         return True
 
     def execute_get(self):
@@ -51,7 +59,8 @@ class CommandHandler:
         return True
             
     def execute_mqtt(self):
-        logger.info("mqtt")
+        self.mqtt.publish(str(self.command["topic"]),str(self.command["payload"]))
+        
         return True
 
 
