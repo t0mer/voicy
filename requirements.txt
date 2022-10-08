@@ -12,3 +12,4 @@ pyyaml
 google_trans_new
 numpy
 configparser
+paho-mqtt
