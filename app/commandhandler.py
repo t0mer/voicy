@@ -23,44 +23,50 @@ class CommandHandler:
                 return []
 
 
-    def command_exists(self, command_text):
+    def command_exists(self, command_text, default_protocol):
         for command in self.commands['commands']:
             if command_text == str(command['text']):
                 self.command = command
                 return True
-        logger.info("Command not found")
+        logger.info("Command not found, fallback to default")
+        command = {
+          "name": "raw",
+          "type": default_protocol,
+          "topic": "voicy/raw",
+          "payload": command_text
+        }
+        self.command = command
         return False
 
-    def execute(self, command_text):
-        if self.command_exists(command_text):
-            type=self.command["type"]
-            if type=="post":
-                return self.execute_post()
-            elif type=="get":
-                return self.execute_get()
-            elif type=="mqtt":
-                return self.execute_mqtt()
-            else:
-                return False
-                
+    def execute_by_type(self, type):
+        if type=="post":
+            return self.execute_post()
+        elif type=="get":
+            return self.execute_get()
+        elif type=="mqtt":
+            return self.execute_mqtt()
+        else:
+            return False
+
+    def execute(self, command_text, default_protocol='mqtt'):
+        self.command_exists(command_text, default_protocol)
+        return self.execute_by_type(self.command['type'])
 
     def execute_post(self):
         if str(self.command).find("data") !=-1 and str(self.command).find("headers")==-1:
             response = requests.post(self.command["url"],json=str(self.command["data"]))
         if str(self.command).find("data") !=-1 and str(self.command).find("headers")!=-1:
-            response = requests.post(self.command["url"],headers=self.command["headers"],json=str(self.command["data"])) 
+            response = requests.post(self.command["url"],headers=self.command["headers"],json=str(self.command["data"]))
         if str(self.command).find("data") ==-1 and str(self.command).find("headers")!=-1:
-            response = requests.post(self.command["url"],headers=self.command["headers"])        
+            response = requests.post(self.command["url"],headers=self.command["headers"])
         logger.info(str(response.status_code))
         return True
 
     def execute_get(self):
         logger.info("get")
         return True
-            
+
     def execute_mqtt(self):
         self.mqtt.publish(str(self.command["topic"]),str(self.command["payload"]))
-        
+
         return True
-
-

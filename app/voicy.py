@@ -44,7 +44,7 @@ bot = TeleBot(BOT_TOKEN)
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     bot.reply_to(message, config.get('Telegram','bot.welcome.message'))
-	
+
 #Handle voice command
 @bot.message_handler(content_types=['voice', 'audio'])
 def function_name(message):
@@ -54,7 +54,7 @@ def function_name(message):
     with open(command_file, 'wb') as new_file:
         new_file.write(downloaded_file)
     transcript = voice.transcript(command_file)
-    command.execute(transcript)
+    command.execute(transcript, config.get('Defaults', 'default.protocol'))
     bot.reply_to(message, transcript)
 
 
