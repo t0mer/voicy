@@ -1,0 +1,50 @@
+commands:  
+
+  - name: Boiler on
+    text: turn boiler on
+    type: mqtt
+    topic: voicy/boiler
+    payload: "on"
+
+  - name: Send Post Request with data and headers
+    text: test post with data and headers
+    type: post
+    url: https://webhook.site/0410c31b-5d90-4361-ae0a-1af846efe852
+    data:
+      id: 1001
+      name: geek
+      passion: coding
+    headers:
+      Content-Type: application/json; charset=utf-8
+      User-Agent: My User Agent 1.0
+      Authorization: Bearer ABCDEFGH
+
+  - name: Send Post Request with data
+    text: Send Post Request with data
+    type: post
+    url: https://webhook.site/0410c31b-5d90-4361-ae0a-1af846efe852
+    data:
+      id: 1001
+      name: geek
+      passion: coding
+
+  - name: Send Post Request with headers only
+    text: Send Post Request with headers only
+    type: post
+    url: https://webhook.site/0410c31b-5d90-4361-ae0a-1af846efe852
+    headers:
+      Content-Type: application/json; charset=utf-8
+      User-Agent: My User Agent 1.0
+
+
+  - name: Set sunset #Home Assistant rest api call to change entity state
+    text: set sunset
+    type: post
+    url: http://xxx.xxx.xxx.xxx:8123/api/states/sun.sun
+    data:
+      state: below_horizon
+      last_changed: 2022-10-08T11:43:29.204838+00:00
+      last_updated: 2022-10-08T11:43:29.204838+00:00
+    headers:
+      Content-Type: application/json
+      Authorization: Bearer 1A2B3C4D12345

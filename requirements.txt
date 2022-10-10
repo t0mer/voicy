@@ -1,0 +1,13 @@
+loguru
+requests
+pyTelegramBotAPI
+cryptography
+google-cloud-speech
+wavinfo
+soundfile
+wave
+pydub
+pyyaml
+numpy
+configparser
+paho-mqtt

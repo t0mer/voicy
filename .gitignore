@@ -1,0 +1,4 @@
+.env
+app/config/key-file.json
+app/recordings
+app/config/config.ini
