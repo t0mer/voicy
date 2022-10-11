@@ -30,7 +30,7 @@ Speech To Text feature requires active google api cloud account with enabled bil
 
 
 ## Installation
-As i mentioned, in order to use Google Speech Recognition, we need to create Google Application and enable the API. Here are the steps you need to follow to integrate your program with the Google Speech-To-Text API.
+As I mentioned, in order to use Google Speech Recognition, we need to create Google Application and enable the API. Here are the steps you need to follow to integrate your program with the Google Speech-To-Text API.
 
 ### Step 1) Create a Google Application, Service account and activate Google speach API
 The first thing you need to access Google APIs is a Google account and create a Google application. You can create a google application using the google console: [Go to google console](https://console.cloud.google.com/).
@@ -116,10 +116,10 @@ After you choose a suitable name for your bot — the bot is created. You will r
 
 ## Step 3) Setup configuration folder
 Before we can go and set up the container using docker command or docker-compose we need to set a persistent volume with 3 files in it:
-* command.yaml - contains the mapping between voice commands and execution plan [sample file](https://github.com/t0mer/voicy/blob/main/app/config/commands.yaml)
+* command.yaml - contains the mapping between voice commands and execution plan [sample file](https://github.com/t0mer/voicy/blob/main/app/config/commands.yaml). Voice commands not found in the `commands.yaml` file will be forwarded to the default protocol (see config.ini below).
 
-'''
-commands:  
+```
+commands:
 
   - name: Boiler on
     text: turn boiler on
@@ -140,7 +140,7 @@ commands:
       User-Agent: My User Agent 1.0
       Authorization: Bearer ABCDEFGH
 
-'''
+```
 
 * config.ini - contains the bot settings (Language, bot token, mqtt broker details) [sample file](https://github.com/t0mer/voicy/blob/main/app/config/config.ini)
 
@@ -207,3 +207,19 @@ Now, run the following command to install and start the bot:
 ```
 docker-compose up -d
 ```
+
+Once the bot is running, you can intercept voice command transcript mqtt messages in NodeRed using the following flow as base:
+```
+[{"id":"ad99fc9b200eb653","type":"mqtt in","z":"9b2c3983f8ebadfa","name":"","topic":"voicy/raw","qos":"2","datatype":"auto-detect","broker":"407a01e4.6b637","nl":false,"rap":true,"rh":0,"inputs":0,"x":120,"y":140,"wires":[["dd67bd29f2e421a7"]]},{"id":"a10f99f03027e442","type":"inject","z":"9b2c3983f8ebadfa","name":"","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":true,"onceDelay":0.1,"topic":"","payload":"","payloadType":"date","x":130,"y":60,"wires":[["dfe92e6a8f57dac1"]]},{"id":"dfe92e6a8f57dac1","type":"function","z":"9b2c3983f8ebadfa","name":"set flow utils","func":"flow.set(\"operatorsMap\", (op) => {\n    switch(op) {\n        case 'on':\n        case 'להדליק':\n            return 'turn_on';\n        case 'off':\n        case 'לכבות':\n            return 'turn_off';\n        case 'toggle':\n        case 'להחליף':\n            return 'toggle';\n        case 'לסגור':\n            return 'close';\n        case 'לפתוח':\n            return 'open';\n        default:\n            return op;\n    }\n});\n\nflow.set(\"locationsMap\", (where) => {\n    switch(where) {\n        case 'סלון':\n        case 'בסלון':\n            return 'salon';\n        case 'מרתף':\n        case 'למטה':\n            return 'basement';\n        case 'כל':\n        case 'כולם':\n            return 'all';\n        case 'מטבח':\n        case 'במטבח':\n            return 'kitchen';\n        default:\n            return 'none';\n    }\n});\n\nflow.set(\"rawDeviceMap\", (device) => {\n    switch (device) {\n        case 'בוילר':\n        case 'דוד':\n            return 'boiler';\n        case 'תריס':\n        case 'תריסים':\n            return 'cover';\n        case 'אור':\n        case 'אורות':\n            return 'light';\n        default:\n            return device;\n    }\n});\n\n","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":330,"y":60,"wires":[[]]},{"id":"dd67bd29f2e421a7","type":"function","z":"9b2c3983f8ebadfa","name":"analyse","func":"const rawDeviceMap = flow.get(\"rawDeviceMap\");\nconst operatorsMap = flow.get(\"operatorsMap\");\nconst locationsMap = flow.get(\"locationsMap\");\n\nconst [op, what, ...args] = msg.payload.split(' ');\n\nconst commandObj = {\n    command: operatorsMap(op),\n    device: rawDeviceMap(what),\n}\n\n//handle args\nif (args.length) {\n    // check if 1st arg is location\n    const where = locationsMap(args[0])\n    if (where !== 'none') {\n        // a location\n        commandObj.where = where;\n    } \n}\n\nmsg.payload = commandObj;\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":320,"y":140,"wires":[["2663f9a6c8a681a3"]]},{"id":"2663f9a6c8a681a3","type":"debug","z":"9b2c3983f8ebadfa","name":"debug 1","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","targetType":"msg","statusVal":"","statusType":"auto","x":500,"y":140,"wires":[]},{"id":"407a01e4.6b637","type":"mqtt-broker","broker":"localhost","port":"1883","clientid":"","usetls":false,"compatmode":true,"keepalive":"60","cleansession":true,"birthTopic":"","birthQos":"0","birthPayload":"","willTopic":"","willQos":"0","willPayload":""}]
+```
+
+This flow assumes voice commands of the pattern:
+```
+<Operation> <Device> <...Args>
+```
+Where args can be location, or any other metadata.
+
+First, on load we inject to the flow context a few functions. This is where you define `operations`, `locations` and `devices`.
+Next, we intercept `voicy/raw` topic messages and analyse the transcript text.
+
+Note: This is a basic flow you should build on, and is not fully operational. Once it determines, for example, "Open covers salon" you should translate that into the proper entity and call the relevant HA service.
