@@ -48,7 +48,7 @@ def function_name(message):
         new_file.write(downloaded_file)
     transcript = voice.transcript(command_file)
     success, result = command.execute(transcript, config.get('Defaults', 'default.protocol'))
-    bot.reply_to(message, result)
+    bot.reply_to(message, f'{transcript}\n{result}')
 
 
 
