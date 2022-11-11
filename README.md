@@ -11,7 +11,7 @@ Voicy can be easely integrated with HomeAssistant or other Smart Home applicatio
 - Send HTTP Post requests (with Headers abd payload).
 - Integrate with nodered.
 
-## Components and Frameworks used in TTS-STT
+## Components and Frameworks used in Voicy
 * [Loguru](https://pypi.org/project/loguru/)
 * [Google cloud speech](https://pypi.org/project/google-cloud-speech/)
 * [Wavinfo ](https://pypi.org/project/wavinfo/)
